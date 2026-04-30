@@ -162,16 +162,16 @@ CONDUCTOR_LABELS = {
     "PE": "PE 地线",
 }
 
-CONDUCTOR_GAP = 2.8
+CONDUCTOR_GAP = 3.6
 
 WIRE_LEGEND = [
-    ("IN", "进线/分线区: 总进线 L/N/PE 从开关位附近进入"),
+    ("IN", "总进线: L/N/PE 三根从开关位附近进入"),
     ("L1", "L1 照明: BV 3x1.5, 开关只切 L, N/PE 到灯"),
-    ("C2", "C2 冰箱: BV 3x2.5, L/N/PE, 独立插座"),
-    ("C3", "C3 左/主备餐+烟机: BV 3x2.5, L/N/PE"),
-    ("C4", "C4 右台面/微波炉/餐桌: BV 3x2.5, L/N/PE"),
-    ("C5", "C5 水槽下/洗碗机: BV 3x2.5, L/N/PE"),
-    ("C6", "C6 电磁炉: BV 3x4-6, L/N/PE, 按功率定"),
+    ("C2", "C2 冰箱: BV 3x2.5, L/N/PE 三根到插座"),
+    ("C3", "C3 左/主备餐+烟机: BV 3x2.5, L/N/PE 三根到点位"),
+    ("C4", "C4 右台面/微波炉/餐桌: BV 3x2.5, L/N/PE 三根到点位"),
+    ("C5", "C5 水槽下/洗碗机: BV 3x2.5, L/N/PE 三根到点位"),
+    ("C6", "C6 电磁炉: BV 3x4-6, L/N/PE 三根到设备"),
 ]
 
 
@@ -1452,7 +1452,7 @@ def draw_wire(
                     [x1 + dx, x2 + dx],
                     [y1 + dy, y2 + dy],
                     color=CONDUCTOR_COLORS[conductor],
-                    lw=max(lw * 0.42, 0.20),
+                    lw=max(lw * 0.34, 0.16),
                     ls=ls,
                     alpha=alpha,
                     zorder=zorder,
@@ -1546,26 +1546,23 @@ def build_wiring_view_from_south_figure() -> tuple[plt.Figure, plt.Axes]:
     draw_wall_trunk(ax, ROOM_W)
     add_label(ax, ENTRY_X, WALL_TRUNK_H + 21, "来自底墙开关位进线\n经吊顶主干转入", size=5.2, color=WIRE_COLORS["IN"])
 
-    # C3: hood + main prep sockets.
-    draw_wire(ax, [(ENTRY_X, WALL_TRUNK_H + 5), (165, WALL_TRUNK_H + 5), (165, 216)], "C3")
-    draw_wire(ax, [(220, WALL_TRUNK_H + 5), (220, 115)], "C3")
-    draw_junction(ax, 220, WALL_TRUNK_H + 5, "C3", "C3", size=4.6)
+    # Stagger routes so red/blue/green conductors are readable.
+    draw_socket_row_feed(ax, [(ENTRY_X, 281), (165, 281)], 165, 216, 1, "C3", feed_offset=14, lw=0.62)
+    draw_socket_row_feed(ax, [(ENTRY_X, 267), (220, 267)], 220, 115, 2, "C3", spacing=12, feed_offset=14, lw=0.62)
+    draw_junction(ax, 220, 267, "C3 备餐/烟机", "C3", size=4.6)
 
-    # C4: right countertop and microwave zone.
-    draw_wire(ax, [(ENTRY_X, WALL_TRUNK_H - 3), (382, WALL_TRUNK_H - 3), (382, 115)], "C4")
-    draw_wire(ax, [(382, WALL_TRUNK_H - 3), (462, WALL_TRUNK_H - 3), (462, 115)], "C4")
-    draw_junction(ax, 382, WALL_TRUNK_H - 3, "C4", "C4", size=4.6)
+    draw_socket_row_feed(ax, [(ENTRY_X, 251), (382, 251)], 382, 115, 2, "C4", spacing=12, feed_offset=14, lw=0.62)
+    draw_socket_row_feed(ax, [(382, 251), (462, 251)], 462, 115, 3, "C4", spacing=10, feed_offset=14, lw=0.62)
+    draw_junction(ax, 382, 251, "C4 右台面", "C4", size=4.6)
 
-    # C5: wet area and dishwasher.
-    draw_wire(ax, [(ENTRY_X, WALL_TRUNK_H - 11), (312, WALL_TRUNK_H - 11), (312, 55)], "C5")
-    draw_wire(ax, [(312, WALL_TRUNK_H - 11), (352, WALL_TRUNK_H - 11), (352, 52)], "C5")
-    draw_junction(ax, 312, WALL_TRUNK_H - 11, "C5 湿区", "C5", size=4.6)
+    draw_socket_row_feed(ax, [(ENTRY_X, 235), (312, 235)], 312, 55, 3, "C5", spacing=10, feed_offset=16, lw=0.62)
+    draw_socket_row_feed(ax, [(312, 235), (352, 235)], 352, 52, 1, "C5", feed_offset=16, lw=0.62)
+    draw_junction(ax, 312, 235, "C5 湿区", "C5", size=4.6)
 
-    # C6: hob dedicated branch.
-    draw_wire(ax, [(ENTRY_X, WALL_TRUNK_H - 19), (132, WALL_TRUNK_H - 19), (132, 52)], "C6")
-    draw_junction(ax, 132, WALL_TRUNK_H - 19, "C6 灶具专线", "C6", size=4.5)
+    draw_socket_row_feed(ax, [(ENTRY_X, 219), (132, 219)], 132, 52, 1, "C6", feed_offset=16, lw=0.62)
+    draw_junction(ax, 132, 219, "C6 灶具专线", "C6", size=4.5)
 
-    add_label(ax, 255, 286, "每个回路画 L/N/PE 三根导体；同回路同管同走；墙面只做竖向下引", size=5.8, color="#555555")
+    add_label(ax, 255, 286, "全图只用三种线色：红=L火，蓝=N零，绿=PE地；每个插座/设备点均三线下引", size=5.8, color="#555555")
     fig.tight_layout(pad=0.2)
     return fig, ax
 
@@ -1582,9 +1579,11 @@ def build_wiring_view_from_north_figure() -> tuple[plt.Figure, plt.Axes]:
 
     draw_electrical_point(ax, ENTRY_X, ENTRY_H, "唯一开关\n控制筒灯\nH=125", kind="switch", label_dx=28, label_dy=0, size=5.8)
     draw_junction(ax, ENTRY_X, ENTRY_H + 18, "厨房进线/分线起点", "IN", size=5.5)
-    draw_wire(ax, [(ENTRY_X, ENTRY_H + 18), (ENTRY_X, WALL_TRUNK_H)], "IN", lw=1.4)
-    draw_wire(ax, [(ENTRY_X - 8, ENTRY_H), (ENTRY_X - 8, WALL_TRUNK_H), (ENTRY_X + 55, WALL_TRUNK_H)], "L1", lw=1.0, conductors=("L",))
-    add_label(ax, ENTRY_X + 42, 226, "L1 照明上行\nL经开关控制\nN/PE直达灯具", size=5.2, color=WIRE_COLORS["L1"], ha="left")
+    draw_wire(ax, [(ENTRY_X, ENTRY_H + 18), (ENTRY_X, WALL_TRUNK_H)], "IN", lw=1.0)
+    draw_wire(ax, [(ENTRY_X - 13, ENTRY_H + 18), (ENTRY_X - 13, ENTRY_H)], "L1", lw=0.8, conductors=("L",))
+    draw_wire(ax, [(ENTRY_X - 13, ENTRY_H), (ENTRY_X - 13, WALL_TRUNK_H), (ENTRY_X + 58, WALL_TRUNK_H)], "L1", lw=0.8, conductors=("L",))
+    draw_wire(ax, [(ENTRY_X + 13, ENTRY_H + 18), (ENTRY_X + 13, WALL_TRUNK_H), (ENTRY_X + 58, WALL_TRUNK_H)], "L1", lw=0.8, conductors=("N", "PE"))
+    add_label(ax, ENTRY_X + 42, 226, "L1 照明上行\nL进开关再返回\nN/PE不进开关", size=5.2, color=WIRE_COLORS["L1"], ha="left")
     add_label(ax, ENTRY_X - 88, 214, "插座/设备回路\nL/N/PE同管上吊顶\n电气上分回路", size=5.2, color=WIRE_COLORS["IN"], ha="right")
     draw_wiring_note(ax, 14, 222, "总进线从开关位进入：红=L火，蓝=N零，绿=PE地", width=230, height=24)
     fig.tight_layout(pad=0.2)
@@ -1603,10 +1602,10 @@ def build_wiring_view_from_west_figure() -> tuple[plt.Figure, plt.Axes]:
     draw_electrical_point(ax, 190, 45, "冰箱三孔\nH=40-50", label_dx=-20, label_dy=34, size=5.0)
     draw_socket_row(ax, 220, 115, 2, "左备餐 x2\nH=115", spacing=12, label_dy=18, size=5.0)
     draw_wall_trunk(ax, ROOM_H, "来自吊顶主干 H≈260")
-    draw_wire(ax, [(ROOM_H, WALL_TRUNK_H + 4), (190, WALL_TRUNK_H + 4), (190, 45)], "C2")
-    draw_wire(ax, [(ROOM_H, WALL_TRUNK_H - 5), (220, WALL_TRUNK_H - 5), (220, 115)], "C3")
-    draw_junction(ax, 190, WALL_TRUNK_H + 4, "C2 冰箱", "C2", size=4.8)
-    draw_junction(ax, 220, WALL_TRUNK_H - 5, "C3 左备餐", "C3", size=4.8)
+    draw_socket_row_feed(ax, [(ROOM_H, 274), (190, 274)], 190, 45, 1, "C2", feed_offset=14, lw=0.62)
+    draw_socket_row_feed(ax, [(ROOM_H, 254), (220, 254)], 220, 115, 2, "C3", spacing=12, feed_offset=14, lw=0.62)
+    draw_junction(ax, 190, 274, "C2 冰箱", "C2", size=4.8)
+    draw_junction(ax, 220, 254, "C3 左备餐", "C3", size=4.8)
     draw_wiring_note(ax, 8, 222, "C2/C3 管内均含 L/N/PE；墙面只做竖向下引", width=190, height=22)
     fig.tight_layout(pad=0.2)
     return fig, ax
@@ -1623,9 +1622,9 @@ def build_wiring_view_from_east_figure() -> tuple[plt.Figure, plt.Axes]:
     draw_socket_row(ax, EAST_POWER_ZONE_POS, HIGH_SOCKET_H, 2, "餐桌旁 x2\nH=105-120", label_dy=18, size=5.2)
     draw_socket_row(ax, EAST_POWER_ZONE_POS, LOW_SOCKET_H, 2, "低位 x2\nH=30-35", label_dy=-18, size=5.2)
     draw_wall_trunk(ax, ROOM_H, "来自吊顶主干 H≈260")
-    draw_wire(ax, [(0, WALL_TRUNK_H), (EAST_POWER_ZONE_POS, WALL_TRUNK_H), (EAST_POWER_ZONE_POS, HIGH_SOCKET_H)], "C4")
-    draw_wire(ax, [(EAST_POWER_ZONE_POS, HIGH_SOCKET_H), (EAST_POWER_ZONE_POS, LOW_SOCKET_H)], "C4")
-    draw_junction(ax, EAST_POWER_ZONE_POS, WALL_TRUNK_H, "C4 餐桌/右区", "C4", size=4.8)
+    draw_socket_row_feed(ax, [(0, 260), (EAST_POWER_ZONE_POS, 260)], EAST_POWER_ZONE_POS, HIGH_SOCKET_H, 2, "C4", spacing=12, feed_offset=14, lw=0.62)
+    draw_socket_row_feed(ax, [(EAST_POWER_ZONE_POS, HIGH_SOCKET_H + 14)], EAST_POWER_ZONE_POS, LOW_SOCKET_H, 2, "C4", spacing=12, feed_offset=14, lw=0.62)
+    draw_junction(ax, EAST_POWER_ZONE_POS, 260, "C4 餐桌/右区", "C4", size=4.8)
     add_label(ax, EAST_POWER_ZONE_POS + 18, 72, "C4: L/N/PE同管垂直下引\n高低位同墙分接", size=5.0, color=WIRE_COLORS["C4"], ha="left")
     draw_wiring_note(ax, 8, 222, "C4 管内含 L/N/PE；餐桌高低位同墙布置", width=190, height=22)
     fig.tight_layout(pad=0.2)
@@ -1655,16 +1654,16 @@ def build_wiring_view_from_ceiling_figure() -> tuple[plt.Figure, plt.Axes]:
         draw_wire(ax, [(x, light_ys[1]), (x, light_ys[0])], "L1", lw=0.36, ls=(0, (4, 5)), alpha=0.28, zorder=2)
     add_label(ax, 210, 152, "L1 照明: 8个筒灯\nL经开关；N/PE直达灯具", size=6.4, color=WIRE_COLORS["L1"])
 
-    # Socket/device circuit bundle in ceiling, then split to north/west/east walls.
-    draw_wire(ax, [j0, (ENTRY_X, 278), (ROOM_W, 278)], "C4", lw=0.72, ls=(0, (7, 3)))
-    draw_wire(ax, [(ENTRY_X, 278), (ENTRY_X, ROOM_H)], "C3", lw=0.72, ls=(0, (7, 3)))
-    draw_wire(ax, [(ENTRY_X - 10, 268), (0, 268), (0, 200)], "C2", lw=0.72, ls=(0, (7, 3)))
-    draw_wire(ax, [(ENTRY_X - 16, 260), (ROOM_W / 2, 260), (ROOM_W / 2, ROOM_H)], "C5", lw=0.72, ls=(0, (7, 3)))
-    draw_wire(ax, [(ENTRY_X - 22, 252), (132, 252), (132, ROOM_H)], "C6", lw=0.72, ls=(0, (7, 3)))
-    add_label(ax, 392, 286, "至东墙餐桌/右台面", size=5.0, color=WIRE_COLORS["C4"])
-    add_label(ax, 252, 287, "至顶部橱柜墙", size=5.0, color=WIRE_COLORS["C3"])
-    add_label(ax, 70, 278, "至西墙冰箱/左备餐", size=5.0, color=WIRE_COLORS["C2"])
-    add_label(ax, 158, 246, "至电磁炉专线", size=5.0, color=WIRE_COLORS["C6"])
+    # Socket/device circuits are staggered in plan view so L/N/PE stay legible.
+    draw_wire(ax, [j0, (ENTRY_X, 142), (ENTRY_X - 34, 142), (ENTRY_X - 34, 270), (0, 270), (0, 200)], "C2", lw=0.62, ls=(0, (7, 3)))
+    draw_wire(ax, [j0, (ENTRY_X, 134), (ENTRY_X - 18, 134), (ENTRY_X - 18, 288), (ENTRY_X, 288), (ENTRY_X, ROOM_H)], "C3", lw=0.62, ls=(0, (7, 3)))
+    draw_wire(ax, [j0, (ENTRY_X, 158), (ENTRY_X + 18, 158), (ENTRY_X + 18, 282), (ROOM_W, 282)], "C4", lw=0.62, ls=(0, (7, 3)))
+    draw_wire(ax, [j0, (ENTRY_X, 166), (ENTRY_X + 34, 166), (ENTRY_X + 34, 262), (ROOM_W / 2, 262), (ROOM_W / 2, ROOM_H)], "C5", lw=0.62, ls=(0, (7, 3)))
+    draw_wire(ax, [j0, (ENTRY_X, 174), (ENTRY_X + 50, 174), (ENTRY_X + 50, 246), (132, 246), (132, ROOM_H)], "C6", lw=0.62, ls=(0, (7, 3)))
+    add_label(ax, 388, 291, "至东墙餐桌/右台面", size=5.0, color=WIRE_COLORS["C4"])
+    add_label(ax, 260, 293, "至顶部橱柜墙", size=5.0, color=WIRE_COLORS["C3"])
+    add_label(ax, 70, 279, "至西墙冰箱/左备餐", size=5.0, color=WIRE_COLORS["C2"])
+    add_label(ax, 162, 238, "至电磁炉专线", size=5.0, color=WIRE_COLORS["C6"])
     draw_wiring_legend(ax, 12, -160, compact=True)
     fig.tight_layout(pad=0.2)
     return fig, ax
